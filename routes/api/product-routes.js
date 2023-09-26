@@ -1,21 +1,55 @@
+// Initializing the Express router for the `/api/products` routes
 const router = require('express').Router();
+// Importing the models relevant to the routes
 const { Product, Category, Tag, ProductTag } = require('../../models');
 
-// The `/api/products` endpoint
+// Routes for the `/api/products` endpoint.
 
-// get all products
-router.get('/', (req, res) => {
-  // find all products
-  // be sure to include its associated Category and Tag data
-});
+// Retrieve data for all products, including the category they belong to and all their associated tags.
+router.get('/', async (req, res) => {
+  try {
 
-// get one product
-router.get('/:id', (req, res) => {
-  // find a single product by its `id`
-  // be sure to include its associated Category and Tag data
-});
+    const allProducts = await Product.findAll({
+      include: [{ model: Category }, { model: Tag, through: ProductTag, as: 'product_tags' }]
+    });
 
-// create new product
+    if (!allProducts) return res.status(404).json({ message: "Sorry. We are out of inventory. Check back soon!" });
+
+    return res.status(200).json(allProducts);
+
+  } catch (err) {
+
+    console.log(err);
+    return res.status(500).json(err);
+
+  }
+}); 
+
+// Retrieve data for a particular product, selected by its id, including the category it belongs to and all the associated tags
+router.get('/:id', async (req, res) => {
+
+  const productId = req.params.id;
+
+  try {
+
+    const singleProduct = await Product.findByPk(productId, {
+      include: [{ model: Category }, { model: Tag, through: ProductTag, as: 'product_tags' }]
+    });
+
+    if (!singleProduct) return res.status(404).json({ message: "No product was found with the given id." });
+
+    return res.status(200).json(singleProduct);
+
+  } catch (err) {
+
+    console.error(err);
+    return res.status(500).json(err);
+
+  }
+})
+  ;
+
+// Add a new product to the inventory
 router.post('/', (req, res) => {
   /* req.body should look like this...
     {
@@ -92,8 +126,28 @@ router.put('/:id', (req, res) => {
     });
 });
 
-router.delete('/:id', (req, res) => {
-  // delete one product by its `id` value
+// Delete one product from the inventory, selecting it by its id.
+router.delete('/:id', async (req, res) => {
+
+  const productToDeleteId = req.params.id;
+
+  try{
+
+    const productWasDeleted = await Product.destroy({
+      where:{
+        id: productToDeleteId
+      }
+    });
+
+    if(!productWasDeleted) return res.status(404).json({ message: "No product was found with the given id." });
+
+    return res.status(200).json(productWasDeleted);
+
+  } catch(err) {
+
+    console.error(err);
+    return res.status(500).json(err);
+  }
 });
 
 module.exports = router;

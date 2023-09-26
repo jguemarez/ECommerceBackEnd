@@ -1,28 +1,126 @@
+//Turning on the router
 const router = require('express').Router();
+//Importing the models relevant to this endpoint's routes
 const { Category, Product } = require('../../models');
 
-// The `/api/categories` endpoint
+// Routes for the `/api/categories` endpoint.
 
-router.get('/', (req, res) => {
-  // find all categories
-  // be sure to include its associated Products
+//Retrieves all of the categories together with their associated products
+router.get('/', async (req, res) => {
+
+  try {
+    const allCategories = await Category.findAll({
+      include: [{ model: Product }]
+    });
+
+    res.status(200).json(allCategories);
+
+  } catch (err) {
+
+    console.error(err);
+    res.status(500).json(err);
+
+  }
 });
 
-router.get('/:id', (req, res) => {
-  // find one category by its `id` value
-  // be sure to include its associated Products
+//Retrieves a particular category by its id, together with its associated products
+router.get('/:id', async (req, res) => {
+
+  const categoryId = req.params.id;
+  
+  try {
+    const singleCategory = await Category.findByPk(categoryId,{
+      include: [{ model: Product }]
+    });
+
+    if (!singleCategory) res.status(404).json({ message: "No category with the given id was found."});
+
+    res.status(200).json(singleCategory);
+  } catch (err) {
+
+    console.error(err);
+    res.status(500).json(err);
+  }
 });
 
-router.post('/', (req, res) => {
-  // create a new category
+//Adds a new category to the inventory
+router.post('/', async (req, res) => {
+
+  const newCategoryName = req.body.category_name;
+
+  try {
+    if (typeof newCategoryName === 'string'){
+
+      const newCategory = await Category.create({ category_name: newCategoryName });
+
+      res.status(201).json(newCategory);
+
+    } else {
+
+      res.status(400).json({ message: "The new category's name must be a nonempty string, no longer than 255 characters." })
+
+    }
+} catch (err) {
+
+  console.error(err);
+  res.status(500).json(err);
+
+}
 });
 
-router.put('/:id', (req, res) => {
-  // update a category by its `id` value
+//Updates an already existing category by changing its name
+router.put('/:id', async (req, res) => {
+
+  const updateData = {
+    category_name : req.body.category_name
+  };
+  const categoryId = req.params.id;
+
+  try{
+
+    if(typeof updateData.category_name === 'string'){
+    const updatedCategory = await Category.update(updateData,{
+      where:{
+        id : categoryId
+      }
+    });
+
+    if(!updatedCategory[0]) res.status(404).json({ message: "No category with the given id was found."});
+
+    res.status(200).json(updatedCategory);
+
+  } else { 
+
+    res.status(400).json({ message: "The new category's name must be a nonempty string, no longer than 255 characters." })
+
+  }
+  } catch(err) {
+    console.error(err);
+    res.status(500).json(err);
+  }
 });
 
-router.delete('/:id', (req, res) => {
-  // delete a category by its `id` value
+//Deletes a category, selecting it by its id.
+router.delete('/:id', async (req, res) => {
+
+  const categoryToDelete = req.params.id;
+
+  try{
+
+    const deletedCategory = await Category.destroy({
+      where: {
+        id: categoryToDelete
+      }
+    });
+
+    if(!deletedCategory) res.status(404).json({ message: "No category with the given id was found."})
+
+    res.status(200).json(deletedCategory);
+  } catch(err) {
+
+    console.error(err);
+    res.status(500).json(err);
+  }
 });
 
 module.exports = router;

@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
   try {
 
     const allProducts = await Product.findAll({
-      include: [{ model: Category }, { model: Tag, through: ProductTag, as: 'product_tags', exclude: 'product_tag'}]
+      include: [{ model: Category }, { model: Tag, through: ProductTag, as: 'product_tags', exclude: 'product_tag' }]
     });
 
     if (!allProducts.length) return res.status(404).json({ message: "Sorry. We are out of inventory. Check back soon!" });
@@ -81,49 +81,65 @@ router.post('/', async (req, res) => {
   };
 });
 
-// update product
-router.put('/:id', (req, res) => {
-  // update product data
-  Product.update(req.body, {
-    where: {
-      id: req.params.id,
-    },
-  })
-    .then((product) => {
-      if (req.body.tagIds && req.body.tagIds.length) {
+//Update a product chosen by its id, assuming it exists
+router.put('/:id', async (req, res) => {
 
-        ProductTag.findAll({
-          where: { product_id: req.params.id }
-        }).then((productTags) => {
-          // create filtered list of new tag_ids
-          const productTagIds = productTags.map(({ tag_id }) => tag_id);
-          const newProductTags = req.body.tagIds
-            .filter((tag_id) => !productTagIds.includes(tag_id))
-            .map((tag_id) => {
-              return {
-                product_id: req.params.id,
-                tag_id,
-              };
-            });
+  const productToUpdateId = parseInt(req.params.id);
+  const updateProductData = {
 
-          // figure out which ones to remove
-          const productTagsToRemove = productTags
-            .filter(({ tag_id }) => !req.body.tagIds.includes(tag_id))
-            .map(({ id }) => id);
-          // run both actions
-          return Promise.all([
-            ProductTag.destroy({ where: { id: productTagsToRemove } }),
-            ProductTag.bulkCreate(newProductTags),
-          ]);
-        });
+    product_name: req.body.product_name,
+    price: req.body.price,
+    stock: req.body.stock,
+    tagIds: req.body.tagIds //An array with the id numbers of the selected tags for the updated product
+  }
+
+  try {
+
+    const productExists = await Product.findByPk(productToUpdateId);
+
+    if (!productExists) return res.status(404).json({ message: "No product was found with the given id." });
+
+    const updateData = await Product.update(updateProductData, {
+      where: {
+        id: productToUpdateId
       }
-
-      return res.json(product);
-    })
-    .catch((err) => {
-      console.error(err);
-      return res.status(400).json(err);
     });
+
+    const { tagIds } = updateProductData;
+
+    if (!tagIds.length) return res.status(200).json(updateData);
+
+
+
+    const oldProductTags = await ProductTag.findAll({
+      where: {
+        product_id: productToUpdateId
+      }
+    });
+
+    const oldProductTagIds = oldProductTags.map(({ tag_id }) => tag_id);
+
+    const newProductTags = tagIds.filter((tag_id) => !oldProductTagIds.includes(tag_id))
+      .map((tag_id) => ({
+        product_id: productToUpdateId,
+        tag_id
+      }));
+
+    const productTagsToRemove = oldProductTags.filter(({ tag_id }) => !tagIds.includes(tag_id))
+      .map(({ id }) => id);
+
+    await ProductTag.destroy({ where: { id: productTagsToRemove } });
+
+    await ProductTag.bulkCreate(newProductTags);
+
+    return res.status(200).json(updateData);
+
+  } catch (err) {
+
+    console.error(err);
+    return res.status(400).json(err);
+  }
+
 });
 
 // Delete one product from the inventory, selecting it by its id.

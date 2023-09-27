@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
       include: [{ model: Product }]
     });
 
-    if(!allCategories) return res.status(404).json({ message: "Sorry. We are in the process of re-categorizing our inventory."})
+    if(!allCategories.length) return res.status(404).json({ message: "Sorry. We are in the process of re-categorizing our inventory."})
 
     return res.status(200).json(allCategories);
 

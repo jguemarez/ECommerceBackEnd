@@ -1,12 +1,15 @@
 //Importing Express.js module
 const express = require('express');
+
 //Importing the contents of the routes folder
 const routes = require('./routes');
+
 // Import the sequelize connection to the database
 const sequelize = require('./config/connection');
 
 //Initializing the Express app (server)
 const app = express();
+
 //Stipulating the port at which the server should be listening
 const port = process.env.PORT || 3001;
 

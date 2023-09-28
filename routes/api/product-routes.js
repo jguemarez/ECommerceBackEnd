@@ -10,8 +10,9 @@ router.get('/', async (req, res) => {
   try {
 
     const allProducts = await Product.findAll({
-      include: [{ model: Category }, { model: Tag, through: ProductTag, as: 'product_tags', exclude: 'product_tag' }]
-    });
+      include: [{ model: Category }, { model: Tag, through: { model: ProductTag, attributes:{ exclude: [ 'productId', 'tagId' ]}}, 
+      as: 'product_tags'}]
+  });
 
     if (!allProducts.length) return res.status(404).json({ message: "Sorry. We are out of inventory. Check back soon!" });
 
@@ -33,7 +34,8 @@ router.get('/:id', async (req, res) => {
   try {
 
     const singleProduct = await Product.findByPk(productId, {
-      include: [{ model: Category }, { model: Tag, through: ProductTag, as: 'product_tags' }]
+      include: [{ model: Category }, { model: Tag, through: { model: ProductTag, attributes: { exclude: [ 'tagId', 'productId' ]}}, 
+        as: 'product_tags' }]
     });
 
     if (!singleProduct) return res.status(404).json({ message: "No product was found with the given id." });

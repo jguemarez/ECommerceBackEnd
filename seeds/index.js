@@ -3,6 +3,7 @@ const seedCategories = require('./category-seeds');
 const seedProducts = require('./product-seeds.js');
 const seedTags = require('./tag-seeds');
 const seedProductTags = require('./product-tag-seeds');
+
 //Importing the Sequelize connection to the database
 const sequelize = require('../config/connection');
 
@@ -26,5 +27,6 @@ const seedAll = async () => {
 
   process.exit(0);
 };
+
 //Starting the seeding 
 seedAll();

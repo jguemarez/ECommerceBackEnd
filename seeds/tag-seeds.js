@@ -1,5 +1,6 @@
 //Importing Sequelize "tag" model
 const { Tag } = require('../models');
+
 //Data array used to populate the table corresponding to "tag"
 const tagData = [
   {
@@ -27,7 +28,9 @@ const tagData = [
     tag_name: 'pop culture',
   },
 ];
+
 //Defining function expression to seed the aforementioned table by applying the .bulkCreate method to the model, passing the array as argument
 const seedTags = () => Tag.bulkCreate(tagData);
+
 //Exporting the seeding arrow function
 module.exports = seedTags;

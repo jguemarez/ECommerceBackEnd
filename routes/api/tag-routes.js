@@ -11,7 +11,8 @@ router.get('/', async (req, res) => {
   try {
 
     const allTags = await Tag.findAll({
-      include: [{ model: Product, through: ProductTag, as: "tag_products" }]
+      include: [{ model: Product, through:{ model: ProductTag, attributes: { exclude: [ 'tagId', 'productId']}},
+       as: "tag_products" }]
     });
 
     if (!allTags.length) return res.status(404).json({ message: "Sorry. We are in the process of re-classifying our inventory." });
@@ -33,7 +34,8 @@ router.get('/:id', async (req, res) => {
   try {
 
     const singleTag = await Tag.findByPk(tagId, {
-      include: [{ model: Product, through: ProductTag, as: "tag_products" }]
+      include: [{ model: Product, through: { model: ProductTag, attributes: { exclude: [ 'productId', 'tagId']}}, 
+      as: "tag_products" }]
     });
 
     if (!singleTag) return res.status(404).json({ message: "No tag was found with the given id." });

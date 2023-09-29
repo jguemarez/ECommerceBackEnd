@@ -67,13 +67,13 @@ router.post('/', async (req, res) => {
 
     const { tagIds } = newProductData;
 
-    if (!tagIds.length) return res.status(200).json(newProduct);
+    if (!tagIds.length) return res.status(201).json(newProduct);
 
     const productTagIdArr = tagIds.map((tag_id) => ({ product_id: newProduct.id, tag_id }))
 
     const productTagIds = await ProductTag.bulkCreate(productTagIdArr);
 
-    return res.status(200).json(productTagIds);
+    return res.status(201).json([newProduct, productTagIds]);
 
   } catch (err) {
 
